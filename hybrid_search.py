@@ -25,12 +25,9 @@ if not API_KEY:
     raise ValueError("Missing OPENAI_API_KEY in .env")
 
 # Step 2: Connect to PostgreSQL and fetch rows
-# Note: Please refer to the guide on setting up the PostgreSQL database the table structure
+# Note: Please refer to the guide on setting up the database
 conn = psycopg2.connect(
     dbname="retail_store",
-    user="retail_admin",
-    password="strongpassword",
-    host="localhost",
     cursor_factory=RealDictCursor
 )
 cur = conn.cursor()
@@ -52,12 +49,12 @@ for r in rows:
     documents.append(Document(page_content=text, metadata=r))
 
 # Step 4: Create BM25 retriever
-bm25 = BM25Retriever.from_documents(documents, k=3)
+bm25 = BM25Retriever.from_documents(documents, k=2)
 
 # Step 5: Create FAISS vector retriever
 embeddings = OpenAIEmbeddings(openai_api_key=API_KEY, model="text-embedding-3-small")
 vector_store = FAISS.from_documents(documents, embeddings)
-vector = vector_store.as_retriever(search_kwargs={"k": 3})
+vector = vector_store.as_retriever(search_kwargs={"k": 2})
 
 # Step 6: Combine into hybrid retriever (40% BM25, 60% FAISS)
 hybrid = EnsembleRetriever(retrievers=[bm25, vector], weights=[0.4, 0.6])
